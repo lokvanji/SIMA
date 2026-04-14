@@ -3,15 +3,27 @@
 //Za pinove UVEK koristi const jer trosi programsku memoriju umesto RAM-a, koji nam je holy grail jer ga ima samo 2kb
 //Ako u kom slucaju zatreba programskog mesta, sto verovatno hoce, izbrisacemo sve sa serial bibliotekom jer zauzima oko 1.5kb programskog prostora(od 32kb)
 //Stagod mislis da je bitno da znam, dodaj u komentare
-const int stepZ = 4;   // Pin za stepovanje
-const int dirZ = 7;    // Pin za smer, napred nazad i to
-const int stepA = 12;
-const int dirA = 13;
+#include <Servo.h>
+const int stepZ = 2;   // Pin za stepovanje
+const int dirZ = 5;    // Pin za smer, napred nazad i to
+const int stepA = 3;
+const int dirA = 6;
 const int enablePin = 8; // Ovo samo jumpujemo
+
+const int servoPin = 11; 
+Servo servo;
+
+const int probePin = A5;
+int sensorValue;
 
 void setup() {
   Serial.begin(9600);
   
+  servo.attach(servoPin);
+  servo.write(90);
+
+  pinMode(probePin, INPUT_PULLUP);
+
   //Outputiranje, ovaj deo ne diraj jer logicno, svaki pin mora biti output, osim ako menjas koji drajver hoces gde, koristim Z i A jer mi samo ti rade trenutno na mom cnc shieldu
   pinMode(stepZ, OUTPUT);
   pinMode(dirZ, OUTPUT);
@@ -24,10 +36,24 @@ void setup() {
 }
 
 void loop() {
+  sensorValue = digitalRead(probePin);
+
+  if (sensorValue == LOW) {
+    Serial.println("jack je konektovan"); //ako je konektovan samo cekamo dok ga ne izbace, mozda je ova logika obrnuta, proveri to
+  } else {
+    // Zapravo ovo koristimo da bismo zapoceli, cekamo dok se jack ne izbaci za pocetak meca(jer je starter cord)
+    Serial.println("Izbacen je jack");
+  }
+
   Serial.println("Radi");
   Move(1, 2000); //Prva stvar je smer, 1 znaci da je high i ide napred, 0 je low i ide unazad, ne znam da li ce nam biti korisno ali bolje nego da pravimo dve funkcije
-  
+  servo.write(0);
+
   delay(1000); // Proizvoljno, ovo ostavljam samo zato sto ne zelimo tokom testiranja da nam radi svo vreme jer moze da pregori motor, to ne zelimo jer onda sve ode u k
+
+  servo.write(180);
+  
+  delay(1000);
 }
 
 void Move(byte smer, unsigned long durationMs) {
